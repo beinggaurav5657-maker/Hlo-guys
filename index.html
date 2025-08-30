@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiSchedule - Smart Timetable Scheduler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: #0d0d0d;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+        .text-neo-blue {
+            color: #00e5ff;
+        }
+        .bg-neo-blue {
+            background-color: #00e5ff;
+        }
+        .border-neo-blue {
+            border-color: #00e5ff;
+        }
+        .text-neo-magenta {
+            color: #ff00e5;
+        }
+        .bg-neo-magenta {
+            background-color: #ff00e5;
+        }
+        .hover-glow:hover {
+            box-shadow: 0 0 10px #00e5ff, 0 0 20px #00e5ff, 0 0 30px #00e5ff;
+            background-color: #00e5ff;
+            color: #0d0d0d;
+        }
+        .input-glow:focus {
+            outline: none;
+            box-shadow: 0 0 5px #ff00e5, 0 0 10px #ff00e5;
+            border-color: #ff00e5;
+        }
+        .dashboard-card {
+            background: rgba(15, 15, 15, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+        .dashboard-card:hover {
+            border-color: #00e5ff;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+        }
+        .neon-border {
+            border: 2px solid #00e5ff;
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
+        }
+        .progress-bar {
+            height: 8px;
+            background-color: #2c2c2c;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #00e5ff;
+            transition: width 0.5s ease;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px #00e5ff; }
+            50% { box-shadow: 0 0 15px #00e5ff; }
+            100% { box-shadow: 0 0 5px #00e5ff; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <header class="bg-[#0d0d0d] shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-microchip text-4xl text-neo-blue"></i>
+                <h1 class="text-3xl font-bold text-white">OptiSchedule</h1>
+            </div>
+            <nav id="main-nav" class="hidden md:flex space-x-8 text-lg">
+                <a href="#dashboard" class="text-gray-400 hover:text-neo-blue hover-glow-text transition-colors duration-300">Dashboard</a>
+                <a href="#input" class="text-gray-400 hover:text-neo-blue hover-glow-text transition-colors duration-300">Input Data</a>
+                <a href="#generate" class="text-gray-400 hover:text-neo-blue hover-glow-text transition-colors duration-300">Generate</a>
+                <button id="logout-btn" class="text-gray-400 hover:text-neo-magenta hover-glow-text transition-colors duration-300">Logout</button>
+            </nav>
+        </div>
+    </header>
+
+    <section id="login-section" class="py-20 flex justify-center items-center h-[calc(100vh-80px)]">
+        <div class="w-full max-w-md mx-auto bg-[#1a1a1a] rounded-xl p-8 neon-border text-center">
+            <h3 class="text-3xl font-bold text-center mb-8 text-white">Login</h3>
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="username" class="block text-gray-300 mb-2 text-left">Username</label>
+                    <input type="text" id="username" class="w-full bg-[#2c2c2c] text-white p-3 rounded-lg border border-gray-700 input-glow" placeholder="admin" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-gray-300 mb-2 text-left">Password</label>
+                    <input type="password" id="password" class="w-full bg-[#2c2c2c] text-white p-3 rounded-lg border border-gray-700 input-glow" placeholder="password123" required>
+                </div>
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-neo-blue text-black font-bold text-lg py-3 rounded-lg hover-glow transition-all duration-300">
+                        Login <i class="fas fa-sign-in-alt ml-2"></i>
+                    </button>
+                </div>
+            </form>
+            <p id="login-status" class="mt-4 text-red-500"></p>
+        </div>
+    </section>
+
+    <main id="main-content" class="hidden">
+        <section class="py-24 text-center">
+            <div class="container mx-auto px-4">
+                <div class="max-w-3xl mx-auto">
+                    <h2 class="text-5xl md:text-6xl font-bold mb-4 text-white drop-shadow-md">
+                        Smart Timetable <span class="text-neo-blue">Optimization</span>
+                    </h2>
+                    <p class="text-lg md:text-xl text-gray-300 mb-8">
+                        Generate the perfect schedule with a single click. Maximize efficiency, minimize clashes.
+                    </p>
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="scrollToSection('input')" class="bg-neo-blue text-black font-semibold py-3 px-8 rounded-full text-lg hover-glow transition-all duration-300">
+                            Get Started <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="dashboard" class="py-20">
+            <div class="container mx-auto px-4">
+                <h3 class="text-3xl font-bold text-center mb-12 text-white">Dashboard Overview</h3>
+                <div class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <div class="dashboard-card rounded-2xl p-6 text-center">
+                        <i class="fas fa-chart-line text-4xl text-neo-blue mb-4"></i>
+                        <h4 class="text-2xl font-bold mb-2 text-white">Classroom Utilization</h4>
+                        <p class="text-4xl font-bold text-neo-blue">85%</p>
+                        <p class="text-gray-400 mt-2">Current optimization rate</p>
+                    </div>
+                    <div class="dashboard-card rounded-2xl p-6 text-center">
+                        <i class="fas fa-users text-4xl text-neo-magenta mb-4"></i>
+                        <h4 class="text-2xl font-bold mb-2 text-white">Faculty Workload</h4>
+                        <p class="text-4xl font-bold text-neo-magenta">90%</p>
+                        <p class="text-gray-400 mt-2">Workload balanced</p>
+                    </div>
+                    <div class="dashboard-card rounded-2xl p-6 text-center">
+                        <i class="fas fa-calendar-times text-4xl text-red-500 mb-4"></i>
+                        <h4 class="text-2xl font-bold mb-2 text-white">Clashes Detected</h4>
+                        <p class="text-4xl font-bold text-red-500">0</p>
+                        <p class="text-gray-400 mt-2">No conflicts found</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="input" class="py-20">
+            <div class="container mx-auto px-4">
+                <h3 class="text-3xl font-bold text-center mb-12 text-white">Input Parameters</h3>
+                <div class="max-w-4xl mx-auto bg-[#1a1a1a] rounded-xl p-8 neon-border">
+                    <form id="input-form" class="space-y-6">
+                        <div>
+                            <label for="classrooms" class="block text-gray-300 mb-2">Number of Classrooms</label>
+                            <input type="number" id="classrooms" class="w-full bg-[#2c2c2c] text-white p-3 rounded-lg border border-gray-700 input-glow" placeholder="e.g., 25" required>
+                        </div>
+                        <div>
+                            <label for="batches" class="block text-gray-300 mb-2">Number of Batches</label>
+                            <input type="number" id="batches" class="w-full bg-[#2c2c2c] text-white p-3 rounded-lg border border-gray-700 input-glow" placeholder="e.g., 10" required>
+                        </div>
+                        <div>
+                            <label for="subjects" class="block text-gray-300 mb-2">Number of Subjects</label>
+                            <input type="number" id="subjects" class="w-full bg-[#2c2c2c] text-white p-3 rounded-lg border border-gray-700 input-glow" placeholder="e.g., 40" required>
+                        </div>
+                        <div>
+                            <label for="faculties" class="block text-gray-300 mb-2">Number of Faculties</label>
+                            <input type="number" id="faculties" class="w-full bg-[#2c2c2c] text-white p-3 rounded-lg border border-gray-700 input-glow" placeholder="e.g., 50" required>
+                        </div>
+                        <div class="pt-4">
+                            <button type="submit" id="generate-btn" class="w-full bg-neo-magenta text-black font-bold text-lg py-3 rounded-lg hover-glow transition-all duration-300">
+                                Generate Timetable <i class="fas fa-cogs ml-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section id="generate" class="py-20">
+            <div class="container mx-auto px-4">
+                <h3 class="text-3xl font-bold text-center mb-12 text-white">Generate Timetables</h3>
+                <div class="max-w-4xl mx-auto bg-[#1a1a1a] rounded-xl p-8 neon-border text-center">
+                    <p class="text-gray-300 mb-6">Click the button below to generate optimized timetables based on your input parameters.</p>
+                    <div id="loading-bar" class="mt-8 hidden">
+                        <p class="text-neo-blue mb-2">Generating... Please wait</p>
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+                    </div>
+                    <div id="results" class="mt-12 hidden">
+                        <h4 class="text-2xl font-bold text-neo-blue mb-4">Timetable Generated!</h4>
+                        <p class="text-gray-400">Multiple options are available for review below.</p>
+                        <div id="timetable-cards" class="mt-8 space-y-6"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-[#0d0d0d] py-12 text-gray-400">
+        <div class="container mx-auto px-4 text-center">
+            <div class="border-t border-gray-800 pt-8">
+                <p>&copy; 2024 OptiSchedule. All rights reserved. Made for SIH25028.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            const mainContent = document.getElementById('main-content');
+            const loginSection = document.getElementById('login-section');
+            const logoutBtn = document.getElementById('logout-btn');
+            const loginStatus = document.getElementById('login-status');
+            const inputForm = document.getElementById('input-form');
+            const loadingBar = document.getElementById('loading-bar');
+            const progressFill = document.getElementById('progress-fill');
+            const resultsDiv = document.getElementById('results');
+            const timetableCardsDiv = document.getElementById('timetable-cards');
+
+            // Check for existing token on page load
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                showMainContent();
+            }
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ username, password }),
+                    });
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        localStorage.setItem('auth_token', result.token);
+                        showMainContent();
+                    } else {
+                        loginStatus.textContent = result.message;
+                    }
+                } catch (error) {
+                    loginStatus.textContent = "Network error. Could not connect to the server.";
+                }
+            });
+
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('auth_token');
+                hideMainContent();
+            });
+
+            inputForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const classrooms = document.getElementById('classrooms').value;
+                const batches = document.getElementById('batches').value;
+                const subjects = document.getElementById('subjects').value;
+                const faculties = document.getElementById('faculties').value;
+                const token = localStorage.getItem('auth_token');
+
+                if (!token) {
+                    alert("Please log in to generate timetables.");
+                    return;
+                }
+
+                loadingBar.classList.remove('hidden');
+                resultsDiv.classList.add('hidden');
+                progressFill.style.width = '0%';
+                
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 10;
+                    progressFill.style.width = `${progress}%`;
+                    if (progress >= 90) {
+                        clearInterval(progressInterval);
+                    }
+                }, 150);
+
+                try {
+                    const response = await fetch('http://127.0.0.1:5000/generate_timetable', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ classrooms, batches, subjects, faculties }),
+                    });
+
+                    const result = await response.json();
+                    
+                    clearInterval(progressInterval);
+                    progressFill.style.width = '100%';
+                    
+                    if (response.ok) {
+                        resultsDiv.classList.remove('hidden');
+                        loadingBar.classList.add('hidden');
+                        renderTimetables(result.timetables);
+                    } else {
+                        resultsDiv.innerHTML = `<h4 class="text-2xl font-bold text-red-500 mb-4">Error!</h4><p class="text-gray-400">${result.message}</p>`;
+                        resultsDiv.classList.remove('hidden');
+                        loadingBar.classList.add('hidden');
+                    }
+
+                } catch (error) {
+                    clearInterval(progressInterval);
+                    progressFill.style.width = '100%';
+                    resultsDiv.innerHTML = `<h4 class="text-2xl font-bold text-red-500 mb-4">Network Error</h4><p class="text-gray-400">Could not connect to the server. Please check if the backend is running.</p>`;
+                    resultsDiv.classList.remove('hidden');
+                    loadingBar.classList.add('hidden');
+                }
+            });
+
+            function showMainContent() {
+                loginSection.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                document.body.style.overflowY = 'auto';
+            }
+
+            function hideMainContent() {
+                mainContent.classList.add('hidden');
+                loginSection.classList.remove('hidden');
+                document.body.style.overflowY = 'hidden';
+            }
+
+            function renderTimetables(timetables) {
+                timetableCardsDiv.innerHTML = '';
+                for (const [option, schedule] of Object.entries(timetables)) {
+                    let tableHTML = `<h5 class="text-xl font-semibold text-white mt-4">${option.charAt(0).toUpperCase() + option.slice(1).replace('option', 'Option ')}</h5>
+                                     <div class="overflow-x-auto mt-4 dashboard-card rounded-xl p-4">
+                                       <table class="w-full text-left whitespace-nowrap">
+                                           <thead>
+                                               <tr class="text-gray-400 text-sm border-b border-gray-700">
+                                                   <th class="py-2 px-3">Day</th>
+                                                   <th class="py-2 px-3">Slot</th>
+                                                   <th class="py-2 px-3">Subject</th>
+                                                   <th class="py-2 px-3">Faculty</th>
+                                                   <th class="py-2 px-3">Room</th>
+                                               </tr>
+                                           </thead>
+                                           <tbody>`;
+                    schedule.forEach(entry => {
+                        tableHTML += `<tr class="border-b border-gray-800 hover:bg-[#222]">
+                                        <td class="py-3 px-3">${entry.day}</td>
+                                        <td class="py-3 px-3">${entry.slot}</td>
+                                        <td class="py-3 px-3 text-neo-blue">${entry.subject}</td>
+                                        <td class="py-3 px-3 text-neo-magenta">${entry.faculty}</td>
+                                        <td class="py-3 px-3 text-white">${entry.room}</td>
+                                     </tr>`;
+                    });
+                    tableHTML += `</tbody></table></div>`;
+                    timetableCardsDiv.innerHTML += tableHTML;
+                }
+            }
+
+            function scrollToSection(id) {
+                document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    </script>
+</body>
+</html>
